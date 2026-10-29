@@ -1,0 +1,9 @@
+node_modules/
+.DS_Store
+*.log
+
+# Secrets and local settings never belong in the repo.
+*.local.json
+auto-answer.json
+.env
+.env.*

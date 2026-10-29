@@ -1,0 +1,10 @@
+{
+  "name": "auto-answer",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit -p .",
+    "setup:telegram": "bun scripts/setup-telegram.ts"
+  }
+}
