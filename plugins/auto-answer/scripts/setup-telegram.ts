@@ -106,7 +106,7 @@ async function main() {
 	await tg.sendMessage({ chat_id: chatId, text: 'auto-answer is connected. Proposals and escalations will arrive in this chat.' })
 	await writeConfigFile(path, { telegramBotToken: token, telegramChatId: chatId })
 	console.log(`4. Confirmation sent. Config written to ${path} (mode 0600).`)
-	console.log('Run "plugins: reload" in Amp, then "auto-answer: test telegram".')
+	console.log('Restart your Amp runner (or run "plugins: reload" in an Amp TUI), then "auto-answer: test telegram".')
 }
 
 main().catch((err) => {

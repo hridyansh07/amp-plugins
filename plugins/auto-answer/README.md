@@ -24,7 +24,16 @@ A proposal whose answer is too long to show in one Telegram message can't be app
 
 ## Install
 
-From the repo root, run `./install.sh auto-answer`, then `plugins: reload` in Amp. Then run `auto-answer: status`. Before Telegram is set up it reports **log-only** mode: the plugin detects and audits questions, but never calls Claude and never sends anything.
+From the repo root, run `./install.sh --copy auto-answer`, then restart your runner (`amp --no-tui`), or run `plugins: reload` in an Amp TUI. Copying works whether or not Amp follows symlinks; re-run it after every `git pull`.
+
+Check that it loaded:
+
+- `amp plugins list` shows `auto-answer` with its `agent.end` and `session.start` events and four commands.
+- `~/.cache/amp-plugins/auto-answer/audit.jsonl` gets a `"event":"loaded"` line, with the mode and pid, from each plugin process. A runner starts one plugin process per served directory; they share this state and take turns polling Telegram.
+
+Before Telegram is set up the mode is **log-only**: the plugin detects and audits questions, but never calls Claude and never sends anything.
+
+Plugin processes on a runner inherit the environment of the shell that started `amp --no-tui`, so `claude` must be on that shell's PATH, or set `claudePath`.
 
 ## Telegram setup
 
@@ -32,13 +41,13 @@ From the repo root, run `./install.sh auto-answer`, then `plugins: reload` in Am
 2. From the repo root, run `bun run setup:telegram` and paste the token at the hidden prompt. The script validates it with `getMe` and never prints it.
 3. Send `/start` to your new bot when the script asks. It waits up to 2 minutes and records your chat id.
 4. It sends a confirmation message and writes `~/.config/amp-plugins/auto-answer.json` with mode 0600.
-5. Run `plugins: reload` in Amp, then `auto-answer: test telegram`.
+5. Restart the runner (or `plugins: reload` in a TUI), then run `auto-answer: test telegram` from a thread's command palette.
 
 Only updates whose chat id and sender id both equal your chat id are acted on. Anything else is logged and ignored.
 
 ## Configuration
 
-Settings live in `~/.config/amp-plugins/auto-answer.json`. An environment variable `AUTO_ANSWER_<KEY>` (upper snake case, for example `AUTO_ANSWER_DAILY_BUDGET_USD`) overrides a file value. Run `plugins: reload` after editing either.
+Settings live in `~/.config/amp-plugins/auto-answer.json`. An environment variable `AUTO_ANSWER_<KEY>` (upper snake case, for example `AUTO_ANSWER_DAILY_BUDGET_USD`) overrides a file value. Restart the runner after editing either.
 
 | Key | Default | Purpose |
 | --- | --- | --- |
@@ -81,15 +90,15 @@ All state lives in `~/.cache/amp-plugins/auto-answer/` (or `$XDG_CACHE_HOME/amp-
 ./install.sh --uninstall auto-answer
 ```
 
-Then run `plugins: reload`. Optionally remove `~/.config/amp-plugins/auto-answer.json` and `~/.cache/amp-plugins/auto-answer/`, and delete the bot with BotFather's `/deletebot`.
+Then restart the runner. Optionally remove `~/.config/amp-plugins/auto-answer.json` and `~/.cache/amp-plugins/auto-answer/`, and delete the bot with BotFather's `/deletebot`.
 
 ## Local verification on the runner
 
 The cloud build ran against fakes only. After pulling, check:
 
 1. `claude --help` on the runner: `--tools` takes a comma list, `--permission-mode dontAsk` exists, and `--restricted` is listed. Then confirm a `--resume … --fork-session --no-session-persistence --restricted` run still finds the session and your login. `--restricted` ignores settings files, which also stops your hooks from running inside the answerer.
-2. `./install.sh`, then `plugins: reload`. `auto-answer: status` should say log-only. If Amp ignores the symlink, use `./install.sh --copy`.
-3. Save the stdout of one real `claude -p --output-format json "say ok"` to `test/fixtures/claude-envelope.json`, then run `bun test`. If the field names differ, fix `parseEnvelope` in `src/answerer.ts`.
+2. `./install.sh --copy auto-answer`, then restart the runner. `amp plugins list` shows the plugin and `audit.jsonl` has a `loaded` line with `"mode":"log-only"`.
+3. Run `claude -p --output-format json "say ok" | jq '{result, total_cost_usd, is_error, subtype}'`. All four should be non-null. If a name differs, fix `parseEnvelope` in `src/answerer.ts` (don't overwrite the test fixture: its `result` is a sample answerer reply the tests rely on).
 4. `bun run setup:telegram`, then `auto-answer: test telegram`.
 5. Delegate a small task through Puck and confirm the worker thread's first message contains the Origin line verbatim.
 6. Happy path: tell a Claude Code session "The deploy target for this project is staging-eu-2." Then delegate a thread that says "Before doing anything, ask me which deploy target to use and wait." Approve the Telegram proposal; the thread should continue.

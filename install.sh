@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
-# Install Amp plugins from this repo into ~/.config/amp/plugins/.
+# Install the Amp plugins in this repo as system plugins.
 #
 #   ./install.sh                  symlink every plugin in plugins/
 #   ./install.sh auto-answer      symlink one plugin
 #   ./install.sh --copy [name…]   copy instead of symlinking (if Amp doesn't follow symlinks)
 #   ./install.sh --uninstall [name…]
 #
-# AMP_PLUGINS_DIR overrides the target directory.
+# Installs into $XDG_CONFIG_HOME/amp/plugins (default ~/.config/amp/plugins), where the Amp CLI,
+# TUI and `amp --no-tui` runners load system plugins. AMP_PLUGINS_DIR overrides the target.
 set -euo pipefail
 
 repo="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-target="${AMP_PLUGINS_DIR:-$HOME/.config/amp/plugins}"
+target="${AMP_PLUGINS_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/amp/plugins}"
 mode=link
 names=()
 
@@ -18,7 +19,7 @@ for arg in "$@"; do
 	case "$arg" in
 		--copy) mode=copy ;;
 		--uninstall) mode=uninstall ;;
-		-h|--help) sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+		-h|--help) sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
 		-*) echo "unknown option: $arg" >&2; exit 2 ;;
 		*) names+=("$arg") ;;
 	esac
@@ -65,5 +66,6 @@ for name in "${names[@]}"; do
 done
 
 if [ "$mode" != uninstall ]; then
-	echo 'Now run "plugins: reload" in Amp (or restart it).'
+	echo 'Now restart your runner (amp --no-tui), or run "plugins: reload" in an Amp TUI.'
+	echo 'Check with: amp plugins list'
 fi

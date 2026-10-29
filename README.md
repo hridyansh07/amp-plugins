@@ -18,11 +18,11 @@ git clone https://github.com/hridyansh07/amp-plugins.git
 cd amp-plugins && ./install.sh
 ```
 
-`install.sh` symlinks every plugin into `~/.config/amp/plugins/<name>`. Then run `plugins: reload` from Amp's command palette, or restart Amp.
+`install.sh` symlinks every plugin into Amp's system plugin folder, `$XDG_CONFIG_HOME/amp/plugins/<name>` (default `~/.config/amp/plugins/<name>`). The Amp TUI and `amp --no-tui` runners both load from there. Then restart the runner, or run `plugins: reload` from a TUI's command palette. `amp plugins list` shows what loaded.
 
 - One plugin only: `./install.sh auto-answer`
 - If Amp doesn't follow the symlink: `./install.sh --copy` (re-run it after every `git pull`)
-- Uninstall: `./install.sh --uninstall`, then `plugins: reload`
+- Uninstall: `./install.sh --uninstall`, then restart the runner
 
 Each plugin's README covers its own setup.
 

@@ -19,10 +19,9 @@ export default function (amp: PluginAPI) {
 	const env = process.env
 	const home = homedir()
 	const clock = systemClock
-	// `cacheDirectory` isn't in the published Plugin API; use it if a future Amp provides it.
-	const cacheDir =
-		(amp.system as { cacheDirectory?: string }).cacheDirectory ??
-		join(env.XDG_CACHE_HOME || join(home, '.cache'), 'amp-plugins', 'auto-answer')
+	// A fixed path rather than Amp's per-plugin cache directory: a runner starts one plugin process
+	// per served directory, and they must all share one state file and one Telegram poller lock.
+	const cacheDir = join(env.XDG_CACHE_HOME || join(home, '.cache'), 'amp-plugins', 'auto-answer')
 	const abort = new AbortController()
 
 	const ready = (async () => {
